@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/authContext'; // Import useAuth
+import axios from 'axios'; // Import axios
 
 const ProductFormModal = ({ initialData = {}, onClose, onSave }) => {
   const [formData, setFormData] = useState(() => ({
@@ -10,8 +12,11 @@ const ProductFormModal = ({ initialData = {}, onClose, onSave }) => {
     image: initialData.image || '',
   }));
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
 
   const categories = ["Electronics", "Books", "Home Goods", "Sports", "Fashion"];
+  const { authToken } = useAuth(); // Get authToken from AuthContext
 
   const validateForm = () => {
     let newErrors = {};
@@ -87,11 +92,70 @@ const ProductFormModal = ({ initialData = {}, onClose, onSave }) => {
     console.log('Image upload simulated');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError(null);
     if (validateForm()) {
-      onSave(formData);
-      onClose();
+      if (!authToken) {
+        setApiError("You must be logged in to add or edit products.");
+        return;
+      }
+      setLoading(true);
+      try {
+        const priceAsNumber = parseFloat(String(formData.price).replace(/[^0-9.]/g, ''));
+        if (isNaN(priceAsNumber)) {
+          setApiError("Invalid price format.");
+          setLoading(false);
+          return;
+        }
+
+        const requestBody = {
+          title: formData.name,
+          description: formData.description,
+          price: priceAsNumber,
+          image_url: formData.image || "https://via.placeholder.com/300x200", // Ensure it's named image_url
+          category: formData.category,
+        };
+
+        const method = initialData.id ? "PUT" : "POST";
+        const url = initialData.id
+          ? `http://localhost:5000/api/products/${initialData.id}`
+          : "http://localhost:5000/api/products";
+
+        const config = {
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken && { "Authorization": `Bearer ${authToken}` }),
+          },
+        };
+
+        let response;
+        if (method === "POST") {
+          response = await axios.post(url, requestBody, config);
+        } else if (method === "PUT") {
+          response = await axios.put(url, requestBody, config);
+        }
+
+        // Axios automatically parses JSON, so we access data directly
+        const data = response.data;
+
+        if (response.status >= 200 && response.status < 300) {
+          onSave(data.data); // Pass the newly created/updated product data to parent
+          onClose();
+        } else {
+          // This block might not be reached with axios if it throws for non-2xx status
+          setApiError(data.message || `Failed to ${initialData.id ? "update" : "add"} product.`);
+        }
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response) {
+          setApiError(err.response.data.message || `Failed to ${initialData.id ? "update" : "add"} product.`);
+        } else {
+          setApiError("Network error. Please try again later.");
+        }
+        console.error("Add/Edit product error:", err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -119,6 +183,7 @@ const ProductFormModal = ({ initialData = {}, onClose, onSave }) => {
           <div></div> {/* For spacing */}
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {apiError && <p className="text-red-500 text-center text-sm mb-4">{apiError}</p>}
           <div className="space-y-1">
             <input
               type="text"
@@ -189,12 +254,12 @@ const ProductFormModal = ({ initialData = {}, onClose, onSave }) => {
           </div>
           <button
             type="submit"
-            disabled={Object.keys(errors).length > 0}
+            disabled={Object.keys(errors).length > 0 || loading}
             className={`w-full py-3 px-4 rounded-xl font-semibold text-white text-lg transition-all duration-300 shadow-lg ${
-              Object.keys(errors).length > 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 transform hover:scale-105'
+              (Object.keys(errors).length > 0 || loading) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 transform hover:scale-105'
             }`}
           >
-            {initialData.id ? "Save Changes" : "Submit Listing"}
+            {loading ? (initialData.id ? "Saving..." : "Submitting...") : (initialData.id ? "Save Changes" : "Submit Listing")}
           </button>
         </form>
       </main>

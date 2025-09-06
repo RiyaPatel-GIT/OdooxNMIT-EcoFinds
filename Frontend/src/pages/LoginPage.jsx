@@ -28,7 +28,8 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        login(data.token, data.user); // Assuming backend returns token and user data
+        // Assuming the backend returns a token or user data on successful login
+        login(data.token, data.user); // Update auth context with token/user data
         const redirectPath = location.state?.from || "/";
         navigate(redirectPath, { replace: true });
         console.log("Login successful");
