@@ -1,33 +1,141 @@
-# OdooxNMIT-EcoFinds
-EcoFinds – Empowering Sustainable Consumption through a Second-Hand Marketplace
+Got it Riya 👍 I’ll draft a **professional README.md** for your EcoFinds project that explains setup, tech stack, and usage (PostgreSQL version). You can copy-paste it directly.
 
+---
 
-# EcoFinds Database
+# 📖 EcoFinds – E-Commerce Platform
 
-This folder contains the database schema, demo data, and queries for the EcoFinds project.
+EcoFinds is a simple **eco-friendly product marketplace** where users can:
 
-## 1. Setup
+* Register & login securely
+* Browse and upload products
+* Add items to their cart
+* Complete purchases
 
-1. Open **pgAdmin 4** and connect to your local PostgreSQL server.
-2. Open `schema.sql` in the Query Tool and run it.
-   - This will create the database, tables, and indexes.
+Built with **Node.js, Express, and PostgreSQL**.
 
-## 2. Insert Demo Data
+---
 
-1. Open `demo_data.sql` in the Query Tool (make sure you are connected to the `ecofinds_db`).
-2. Run the file to insert sample users, products, carts, and purchases.
+## 🚀 Features
 
-## 3. Test Queries
+* 👤 **User Authentication** – Register & login with JWT
+* 📦 **Product Management** – Add, view, update, and delete products
+* 🛒 **Cart System** – Add/remove products from cart
+* 💳 **Purchases** – Checkout and complete orders
+* 🔐 **Protected Routes** – Role-based access with JWT middleware
 
-- Run `test_queries.sql` to validate the setup.
-- Example outputs:
-  - View products
-  - Search products by keyword
-  - View a user’s cart with quantities and total price
-  - View purchase history
+---
 
-## 4. Notes
+## 🛠 Tech Stack
 
-- Default database: `ecofinds_db`
-- Default user: `ecofinds` (password: `ecofinds_pass`)
-- You can modify these in `schema.sql` if needed.
+* **Backend:** Node.js, Express.js
+* **Database:** PostgreSQL (via Sequelize ORM)
+* **Auth:** JWT (JSON Web Token)
+* **Other:** dotenv, bcrypt, middleware for error handling
+
+---
+
+## 📂 Project Structure
+
+```
+EcoFinds/
+ ├── backend/
+ │   ├── config/        # DB config
+ │   ├── controllers/   # Auth, Cart, Product, Purchase logic
+ │   ├── middleware/    # JWT Auth, Error handler
+ │   ├── models/        # Sequelize models (User, Product, Cart, Order)
+ │   ├── server.js      # Main entry point
+ │   ├── package.json
+ │   └── .env
+ └── README.md
+```
+
+---
+
+## ⚙️ Setup & Installation
+
+### 1. Clone repo
+
+```bash
+git clone <your-repo-url>
+cd EcoFinds/backend
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure `.env`
+
+Create a `.env` file in `backend/` with:
+
+```env
+PORT=5000
+DB_NAME=ecofinds
+DB_USER=postgres
+DB_PASS=yourpassword
+DB_HOST=localhost
+JWT_SECRET=superSecretKey
+```
+
+### 4. Setup Database
+
+* Make sure PostgreSQL is installed and running.
+* Create a database:
+
+```sql
+CREATE DATABASE ecofinds;
+```
+
+### 5. Run the server
+
+```bash
+npm start
+```
+
+Server runs at: **[http://localhost:5000](http://localhost:5000)**
+
+---
+
+## 🔎 API Endpoints
+
+### Auth
+
+* `POST /api/auth/register` → Register user
+* `POST /api/auth/login` → Login & get JWT
+
+### Products
+
+* `POST /api/products` → Add product (requires token)
+* `GET /api/products` → View all products
+
+### Cart
+
+* `POST /api/cart` → Add to cart
+* `GET /api/cart` → View cart
+
+### Purchase
+
+* `POST /api/purchase` → Checkout cart
+
+---
+
+## 🧪 Testing with Postman
+
+1. Register → Login → Copy JWT token
+2. Add a product (with Authorization header)
+3. Add product to cart
+4. Checkout purchase
+
+---
+
+## 📌 Future Improvements
+
+* ✅ Frontend with React
+* ✅ Product image upload with Cloudinary
+* ✅ Admin dashboard
+
+---
+
+👉 Riya, do you want me to also **add ready-to-use API request examples (Postman collection link / curl commands)** inside the README so your teacher/tester can test easily without asking you?
