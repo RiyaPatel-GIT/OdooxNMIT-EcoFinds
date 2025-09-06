@@ -1,16 +1,46 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/authContext';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log('Login button clicked');
-    console.log('Email:', email);
-    console.log('Password:', password);
-    // In a real app, this would handle user authentication
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login(data.token, data.user); // Assuming backend returns token and user data
+        const redirectPath = location.state?.from || "/";
+        navigate(redirectPath, { replace: true });
+        console.log("Login successful");
+      } else {
+        setError(data.message || "Login failed. Please check your credentials.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again later.");
+      console.error("Login error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -19,6 +49,7 @@ const LoginPage = () => {
       <div className="container mx-auto max-w-sm p-6 bg-white rounded-xl shadow-lg">
         <h2 className="text-3xl font-bold text-center mb-6 text-blue-700">Login</h2>
         <form onSubmit={handleLogin} className="space-y-4">
+          {error && <p className="text-red-500 text-center text-sm mb-4">{error}</p>}
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
               Email
@@ -51,8 +82,9 @@ const LoginPage = () => {
             <button
               type="submit"
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold text-white text-lg transition-all duration-300 shadow-lg transform hover:scale-105"
+              disabled={loading}
             >
-              Login
+              {loading ? "Logging In..." : "Login"}
             </button>
             <Link to="/signup" className="text-blue-600 hover:text-blue-800 font-semibold text-sm transition duration-300">
               Don't have an account? Sign Up
