@@ -8,7 +8,7 @@ const {verifyJWT} = require("../middleware/auth.Middleware.js");
 // define the routes
 authrouter.route("/signup").post(signup);
 authrouter.route("/login").post(login);
-authrouter.route("/auth-check").get(verifyJWT,checkAuth);
+
 
 
 module.exports = authrouter;
