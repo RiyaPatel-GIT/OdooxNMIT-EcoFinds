@@ -1,7 +1,3 @@
-Got it Riya 👍 I’ll draft a **professional README.md** for your EcoFinds project that explains setup, tech stack, and usage (PostgreSQL version). You can copy-paste it directly.
-
----
-
 # 📖 EcoFinds – E-Commerce Platform
 
 EcoFinds is a simple **eco-friendly product marketplace** where users can:
@@ -136,6 +132,3 @@ Server runs at: **[http://localhost:5000](http://localhost:5000)**
 * ✅ Product image upload with Cloudinary
 * ✅ Admin dashboard
 
----
-
-👉 Riya, do you want me to also **add ready-to-use API request examples (Postman collection link / curl commands)** inside the README so your teacher/tester can test easily without asking you?
