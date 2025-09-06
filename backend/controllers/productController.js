@@ -18,7 +18,7 @@ const getAllProducts = async (req, res) => {
     // Add search filter
     if (search) {
       paramCount++;
-      query += ` AND (name ILIKE $${paramCount} OR description ILIKE $${paramCount})`;
+      query += ` AND (title ILIKE $${paramCount} OR description ILIKE $${paramCount})`;
       params.push(`%${search}%`);
     }
 
@@ -104,37 +104,29 @@ const getProductById = async (req, res) => {
 // Add new product (Admin only)
 const addProduct = async (req, res) => {
   try {
-    const { name, description, price, stock_quantity, image_url, category } = req.body;
+    const { title, description, price, image_url, category } = req.body;
     const userId = req.user.user_id;
 
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin role required.'
-      });
-    }
-
     // Validation
-    if (!name || !price || stock_quantity === undefined) {
+    if (!title || !price ) {
       return res.status(400).json({
         success: false,
-        message: 'Name, price, and stock quantity are required'
+        message: 'Title and price are required'
       });
     }
-
-    if (price < 0 || stock_quantity < 0) {
+    
+    if (price < 0 ) {
       return res.status(400).json({
         success: false,
-        message: 'Price and stock quantity must be non-negative'
+        message: 'Price must be non-negative'
       });
     }
 
     const result = await pool.query(
-      `INSERT INTO products (name, description, price, stock_quantity, image_url, category) 
+      `INSERT INTO products (user_id, title, description, price, image_url, category) 
        VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING *`,
-      [name, description, price, stock_quantity, image_url, category]
+      [userId, title, description, price, image_url, category]
     );
 
     res.status(201).json({
@@ -155,15 +147,7 @@ const addProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, stock_quantity, image_url, category } = req.body;
-
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin role required.'
-      });
-    }
+    const { title, description, price, image_url, category } = req.body;
 
     // Check if product exists
     const existingProduct = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);
@@ -179,10 +163,10 @@ const updateProduct = async (req, res) => {
     const params = [];
     let paramCount = 0;
 
-    if (name !== undefined) {
+    if (title !== undefined) {
       paramCount++;
-      updates.push(`name = $${paramCount}`);
-      params.push(name);
+      updates.push(`title = $${paramCount}`);
+      params.push(title);
     }
     if (description !== undefined) {
       paramCount++;
@@ -193,11 +177,6 @@ const updateProduct = async (req, res) => {
       paramCount++;
       updates.push(`price = $${paramCount}`);
       params.push(price);
-    }
-    if (stock_quantity !== undefined) {
-      paramCount++;
-      updates.push(`stock_quantity = $${paramCount}`);
-      params.push(stock_quantity);
     }
     if (image_url !== undefined) {
       paramCount++;
@@ -217,8 +196,6 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    paramCount++;
-    updates.push(`updated_at = CURRENT_TIMESTAMP`);
     paramCount++;
     params.push(id);
 
@@ -243,14 +220,6 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin role required.'
-      });
-    }
 
     // Check if product exists
     const existingProduct = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);

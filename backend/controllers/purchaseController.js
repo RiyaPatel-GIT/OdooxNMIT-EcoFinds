@@ -14,7 +14,7 @@ const getPurchaseHistory = async (req, res) => {
         p.quantity,
         p.purchase_date,
         pr.product_id,
-        pr.name,
+        pr.title,
         pr.description,
         pr.price,
         pr.image_url,
@@ -73,9 +73,8 @@ const purchaseFromCart = async (req, res) => {
       SELECT 
         c.product_id,
         c.quantity,
-        p.name,
-        p.price,
-        p.stock_quantity
+        p.title,
+        p.price
       FROM cart c
       JOIN products p ON c.product_id = p.product_id
       WHERE c.user_id = $1
@@ -95,14 +94,8 @@ const purchaseFromCart = async (req, res) => {
 
     // Validate stock and prepare purchases
     for (const item of cartItems) {
-      if (item.stock_quantity < item.quantity) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock for ${item.name}. Available: ${item.stock_quantity}, Requested: ${item.quantity}`
-        });
-      }
-
+      // No stock check as per new schema, assuming product is available if in cart
+      
       purchases.push({
         product_id: item.product_id,
         quantity: item.quantity,
@@ -117,12 +110,6 @@ const purchaseFromCart = async (req, res) => {
       await client.query(
         'INSERT INTO purchases (user_id, product_id, quantity) VALUES ($1, $2, $3)',
         [userId, purchase.product_id, purchase.quantity]
-      );
-
-      // Update stock
-      await client.query(
-        'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE product_id = $2',
-        [purchase.quantity, purchase.product_id]
       );
     }
 
@@ -174,39 +161,21 @@ const purchaseProduct = async (req, res) => {
       });
     }
 
-    // Check if product exists and has stock
     const productResult = await client.query(
-      'SELECT * FROM products WHERE product_id = $1',
+      'SELECT price FROM products WHERE product_id = $1',
       [product_id]
     );
-
     if (productResult.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
-
     const product = productResult.rows[0];
-    if (product.stock_quantity < quantity) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient stock. Available: ${product.stock_quantity}, Requested: ${quantity}`
-      });
-    }
-
+    // Assuming no stock management based on schema
+    
     // Create purchase
     await client.query(
       'INSERT INTO purchases (user_id, product_id, quantity) VALUES ($1, $2, $3)',
       [userId, product_id, quantity]
-    );
-
-    // Update stock
-    await client.query(
-      'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE product_id = $2',
-      [quantity, product_id]
     );
 
     await client.query('COMMIT');
@@ -257,14 +226,14 @@ const getPurchaseStats = async (req, res) => {
     // Get most purchased product
     const mostPurchasedResult = await pool.query(`
       SELECT 
-        pr.name,
+        pr.title,
         pr.product_id,
         SUM(p.quantity) as total_quantity,
         COUNT(p.purchase_id) as purchase_count
       FROM purchases p
       JOIN products pr ON p.product_id = pr.product_id
       WHERE p.user_id = $1
-      GROUP BY pr.product_id, pr.name
+      GROUP BY pr.product_id, pr.title
       ORDER BY total_quantity DESC
       LIMIT 1
     `, [userId]);

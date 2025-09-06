@@ -11,12 +11,11 @@ const getCart = async (req, res) => {
         c.quantity,
         c.added_at,
         p.product_id,
-        p.name,
+        p.title,
         p.description,
         p.price,
         p.image_url,
-        p.category,
-        p.stock_quantity
+        p.category
       FROM cart c
       JOIN products p ON c.product_id = p.product_id
       WHERE c.user_id = $1
@@ -72,27 +71,6 @@ const addToCart = async (req, res) => {
       });
     }
 
-    // Check if product exists and has stock
-    const productResult = await pool.query(
-      'SELECT * FROM products WHERE product_id = $1',
-      [product_id]
-    );
-
-    if (productResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
-    }
-
-    const product = productResult.rows[0];
-    if (product.stock_quantity < quantity) {
-      return res.status(400).json({
-        success: false,
-        message: `Only ${product.stock_quantity} items available in stock`
-      });
-    }
-
     // Check if item already exists in cart
     const existingItem = await pool.query(
       'SELECT * FROM cart WHERE user_id = $1 AND product_id = $2',
@@ -103,13 +81,6 @@ const addToCart = async (req, res) => {
       // Update existing item quantity
       const newQuantity = existingItem.rows[0].quantity + quantity;
       
-      if (newQuantity > product.stock_quantity) {
-        return res.status(400).json({
-          success: false,
-          message: `Cannot add ${quantity} more items. Only ${product.stock_quantity - existingItem.rows[0].quantity} more available`
-        });
-      }
-
       await pool.query(
         'UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3',
         [newQuantity, userId, product_id]
@@ -160,27 +131,6 @@ const updateCartItem = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Quantity must be at least 1'
-      });
-    }
-
-    // Check if product exists and has stock
-    const productResult = await pool.query(
-      'SELECT * FROM products WHERE product_id = $1',
-      [productId]
-    );
-
-    if (productResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found'
-      });
-    }
-
-    const product = productResult.rows[0];
-    if (product.stock_quantity < quantity) {
-      return res.status(400).json({
-        success: false,
-        message: `Only ${product.stock_quantity} items available in stock`
       });
     }
 
