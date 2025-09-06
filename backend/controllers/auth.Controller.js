@@ -6,11 +6,11 @@ const JWT_SECRET = process.env.JWT_SECRET; // use .env for this
 
 // Signup function
 const signup = async (req, res) => {
-  const { displayName, email, password, confirmPassword } = req.body;
+  const { username, email, password, confirmPassword } = req.body;
   
   try {
     // Validation
-    if (!displayName || !email || !password || !confirmPassword) {
+    if (!username || !email || !password || !confirmPassword) {
       return res.status(400).json({ 
         success: false,
         message: "All fields are required" 
@@ -46,8 +46,8 @@ const signup = async (req, res) => {
 
     // Create user
     const result = await pool.query(
-      "INSERT INTO users (display_name, email, password_hash, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, display_name, email, role, created_at",
-      [displayName, email, passwordHash, 'user']
+      "INSERT INTO users (username, email, password_hash, profile_image, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING user_id, username, email, profile_image, created_at",
+      [username, email, passwordHash, null]
     );
 
     
@@ -55,7 +55,7 @@ const signup = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role },
+      { user_id: newUser.user_id, email: newUser.email, username: newUser.username },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -65,10 +65,10 @@ const signup = async (req, res) => {
       message: "User created successfully",
       data: {
         user: {
-          id: newUser.id,
-          displayName: newUser.display_name,
+          user_id: newUser.user_id,
+          username: newUser.username,
           email: newUser.email,
-          role: newUser.role,
+          profileImage: newUser.profile_image,
           createdAt: newUser.created_at
         },
         token
@@ -126,7 +126,7 @@ const login = async (req, res) => {
 
     // 3) Generate JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role }, 
+      { user_id: user.user_id, email: user.email, username: user.username }, 
       JWT_SECRET, 
       { expiresIn: "7d" }
     );
@@ -145,10 +145,10 @@ const login = async (req, res) => {
         message: "User logged in successfully", 
         data: {
           user: {
-            id: user.id,
-            displayName: user.display_name,
+            user_id: user.user_id,
+            username: user.username,
             email: user.email,
-            role: user.role
+            profileImage: user.profile_image
           },
           token
         }

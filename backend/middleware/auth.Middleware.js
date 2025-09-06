@@ -41,7 +41,7 @@ const verifyJWT = async (req, res, next) => {
     }
     // user is in result.row[0]
     const user = result.rows[0];
-    req.user = user;
+    req.user = { user_id: user.user_id, username: user.username, email: user.email, profile_image: user.profile_image };
     next();
   } catch (err) {
     console.log("Error state here logging it just for looking in the verify token middleware",err)
