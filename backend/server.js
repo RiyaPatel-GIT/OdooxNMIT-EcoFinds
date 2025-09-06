@@ -21,8 +21,14 @@ app.use(cookieParser());
 
 // Routes
 const authrouter = require("./routes/auth.Routes.js");
+const productRoutes = require("./routes/productRoutes.js");
+const cartRoutes = require("./routes/cartRoutes.js");
+const purchaseRoutes = require("./routes/purchaseRoutes.js");
 
 app.use("/api/auth", authrouter);
+app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/purchases", purchaseRoutes);
 
 // Health check route
 app.get("/api/health", (req, res) => {
@@ -40,30 +46,12 @@ const startServer = async () => {
     await pool.query('SELECT NOW()');
     console.log('✅ Database connected successfully');
 
-    // Create users table if it doesn't exist
-    const createUsersTable = `
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        display_name VARCHAR(100) NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        role VARCHAR(20) DEFAULT 'user',
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      )
-    `;
-    
-    await pool.query(createUsersTable);
-    console.log('✅ Users table ready');
+    console.log('✅ Database ready');
 
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
-      console.log(`🔐 Auth endpoints:`);
-      console.log(`   POST http://localhost:${PORT}/api/auth/signup`);
-      console.log(`   POST http://localhost:${PORT}/api/auth/login`);
-      console.log(`   GET  http://localhost:${PORT}/api/auth/auth-check`);
+      
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
