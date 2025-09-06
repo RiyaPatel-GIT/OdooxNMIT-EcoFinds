@@ -50,6 +50,7 @@ const signup = async (req, res) => {
       [displayName, email, passwordHash, 'user']
     );
 
+    
     const newUser = result.rows[0];
 
     // Generate JWT token
