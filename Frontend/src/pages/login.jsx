@@ -4,16 +4,42 @@ import { useAuth } from "../context/authContext"
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    login(email, password);
+    setLoading(true);
+    setError(null);
 
-    const redirectPath = location.state?.from || "/";
-    navigate(redirectPath, { replace: true });
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Assuming the backend returns a token or user data on successful login
+        login(data.token, data.user); // Update auth context with token/user data
+        const redirectPath = location.state?.from || "/";
+        navigate(redirectPath, { replace: true });
+      } else {
+        setError(data.message || "Login failed. Please check your credentials.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again later.");
+      console.error("Login error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,6 +47,7 @@ const LoginPage = () => {
       <div className="bg-gray-800 p-6 rounded-2xl shadow-lg w-[350px]">
         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
         <form onSubmit={handleLogin} className="space-y-4">
+          {error && <p className="text-red-500 text-center text-sm">{error}</p>}
           <input
             type="email"
             placeholder="Email"
@@ -40,8 +67,9 @@ const LoginPage = () => {
           <button
             type="submit"
             className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-semibold transition"
+            disabled={loading}
           >
-            Login
+            {loading ? "Logging In..." : "Login"}
           </button>
         </form>
       </div>

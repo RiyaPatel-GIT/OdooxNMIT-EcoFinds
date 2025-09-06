@@ -4,12 +4,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
-import AddProductPage from "./pages/AddProductPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx"; 
 import MyListingPage from "./pages/MyListingPage.jsx"; // Ensure this exists
 import Navbar from "./components/Navbar.jsx"; 
 import Footer from "./components/Footer.jsx"; 
+import PreviousPurchasesPage from "./pages/PreviousPurchasesPage.jsx";
 
 import { AuthProvider } from "./context/authContext.jsx";
 import { ModalProvider } from "./context/ModalContext.jsx";
@@ -42,8 +42,8 @@ function App() {
               path="/cart"
               element={<CartPage cartItems={cartItems} removeFromCart={removeFromCart} />}
             />
-            <Route path="/add-product" element={<AddProductPage />} />
             <Route path="/my-listing" element={<MyListingPage />} />
+            <Route path="/previous-purchases" element={<PreviousPurchasesPage />} />
           </Routes>
           <Footer />
         </Router>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -7,18 +8,61 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    if (error) setError(null); // Clear error on input change
+    if (success) setSuccess(null); // Clear success on input change
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add validation + API call
-    console.log("Signup Data:", formData);
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          displayName: formData.displayName,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(data.message || "Signup successful! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login"); // Redirect to login page on success
+        }, 2000);
+      } else {
+        setError(data.message || "Signup failed. Please try again.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again later.");
+      console.error("Signup error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,6 +74,9 @@ const Signup = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <p className="text-red-500 text-center text-sm">{error}</p>}
+          {success && <p className="text-green-500 text-center text-sm">{success}</p>}
+
           <div>
             <label className="block mb-1">Display Name:</label>
             <input
@@ -81,8 +128,9 @@ const Signup = () => {
           <button
             type="submit"
             className="w-full bg-blue-600 py-2 rounded-lg hover:bg-blue-700 transition"
+            disabled={loading}
           >
-            Sign Up
+            {loading ? "Signing Up..." : "Sign Up"}
           </button>
         </form>
       </div>
